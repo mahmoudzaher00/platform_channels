@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'native_class/native_communications.dart';
 
@@ -26,7 +28,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-
   final String title;
 
   @override
@@ -34,32 +35,28 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  double num1=0.0;
-  double num2=0.0;
-  double sum=0.0;
-  String name='';
+  /// Event Channel mean listen to channel give me data from native not stop it's give data
+  /// not like method channel give data and stop
+  static const EventChannel eventChannel = EventChannel('com.native.accelerometer/data');
+  StreamSubscription? _accelerometerSubscription;
+  String accelerometerData = "Waiting for data....";
 
-  void calculateSum()async{
-    NativeCommunications nativeCommunications = NativeCommunications();
-   double result=await nativeCommunications.getSumFromNative(num1, num2);
-    print('sum from native: $sum');
-    setState(() {
-      sum=result;
+  @override
+  void initState() {
+    super.initState();
+    _startListening();
+  }
 
+  void _startListening() {
+    _accelerometerSubscription = eventChannel.receiveBroadcastStream().listen((event) {
+      setState(() {
+        accelerometerData = "X: ${event['x']} Y: ${event['y']} Z: ${event['z']}";
+      });
     });
   }
-  void getName()async{
-    NativeCommunications nativeCommunications = NativeCommunications();
-    String result=await nativeCommunications.getNameFromNative(name);
-    print('name from native: $name');
-    setState(() {
-      name=result;});
-  }
-
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -68,50 +65,20 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              decoration: const InputDecoration(labelText: 'Number 1'),
-              onChanged: (value) {
-                num1 = double.tryParse(value) ?? 0.0;
-              },
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            TextField(
-              decoration: const InputDecoration(labelText: 'Number 2'),
-              onChanged: (value) {
-                num2 = double.tryParse(value) ?? 0.0;
-              },
-            ),
-            const SizedBox(
-              height: 20,
-            ),
+          children: [
             Text(
-              'sum: $sum' ,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            TextField(
-              decoration: const InputDecoration(labelText: 'User Name '),
-              onChanged: (value) {
-                name = value;
-              },
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Text(
-              'user name : $name' ,
-              style: Theme.of(context).textTheme.headlineMedium,
+              'Accelerometer Data :$accelerometerData ',
+              style: TextStyle(fontSize: 24),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: calculateSum,
-        tooltip: 'Sum',
-        child:  Icon(Icons.check),
-      )
     );
+  }
+  @override
+  void dispose() {
+    _accelerometerSubscription?.cancel();
+    super.dispose();
   }
 }

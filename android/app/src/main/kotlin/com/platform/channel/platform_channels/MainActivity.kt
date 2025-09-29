@@ -1,27 +1,67 @@
 package com.platform.channel.platform_channels
 
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 
 
-class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.native.channel"
-    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "getSum") {
-                val num1: Double = call.argument<Double>("num1") ?: 0.0
-                val num2: Double = call.argument<Double>("num2") ?: 0.0
-                val sum = num1 + num2
-                result.success(sum)
-            } else if (call.method == "getName") {
-                val name: String = call.argument<String>("name") ?: ""
-                result.success(name)
-            }
-            else {
-                result.notImplemented()
-            }
+class MainActivity : FlutterActivity(),SensorEventListener {
+    private lateinit var sensorManager: SensorManager
+    private var accelerometerSensor: Sensor? = null
+    private var eventSink: EventChannel.EventSink? = null
+    private val CHANNEL = "com.native.accelerometer/data"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Initialize sensor manager and accelerometer
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        // Set up event channel
+        EventChannel(flutterEngine?.dartExecutor?.binaryMessenger!!, CHANNEL)
+            .setStreamHandler(
+                object : EventChannel.StreamHandler {
+                    override fun onListen(
+                        arguments: Any?,
+                        events: EventChannel.EventSink?
+                    ) {
+                        eventSink = events
+                        accelerometerSensor?.also { sensor ->
+                            sensorManager.registerListener(
+                                this@MainActivity,
+                                sensor,
+                                SensorManager.SENSOR_DELAY_NORMAL
+                            )
+                        }
+                    }
+
+                    override fun onCancel(arguments: Any?) {
+                        sensorManager.unregisterListener(this@MainActivity)
+                        eventSink = null
+                    }
+                }
+            )
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER) {
+            val data = mapOf("x" to event.values[0], "y" to event.values[1], "z" to event.values[2])
+            eventSink?.success(data) // Use the eventSink defined in the StreamHandler
         }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        // Optional, not needed in most cases
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        sensorManager.unregisterListener(this)
     }
 }
