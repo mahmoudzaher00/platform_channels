@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-
 import 'native_class/native_communications.dart';
 
 void main() {
@@ -26,7 +23,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-
   final String title;
 
   @override
@@ -34,32 +30,31 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  double num1=0.0;
-  double num2=0.0;
-  double sum=0.0;
-  String name='';
+  double num1 = 0.0;
+  double num2 = 0.0;
+  double sum = 0.0;
+  String name = '';
 
-  void calculateSum()async{
+  void calculateSum() async {
     NativeCommunications nativeCommunications = NativeCommunications();
-   double result=await nativeCommunications.getSumFromNative(num1, num2);
+    double result = await nativeCommunications.getSumFromNative(num1, num2);
     print('sum from native: $sum');
     setState(() {
-      sum=result;
-
+      sum = result;
     });
   }
-  void getName()async{
+
+  void getName() async {
     NativeCommunications nativeCommunications = NativeCommunications();
-    String result=await nativeCommunications.getNameFromNative(name);
+    String result = await nativeCommunications.getNameFromNative(name);
     print('name from native: $name');
     setState(() {
-      name=result;});
+      name = result;
+    });
   }
-
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -75,20 +70,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 num1 = double.tryParse(value) ?? 0.0;
               },
             ),
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             TextField(
               decoration: const InputDecoration(labelText: 'Number 2'),
               onChanged: (value) {
                 num2 = double.tryParse(value) ?? 0.0;
               },
             ),
-            const SizedBox(
-              height: 20,
-            ),
+            const SizedBox(height: 20),
             Text(
-              'sum: $sum' ,
+              'sum: $sum',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             TextField(
@@ -97,11 +88,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 name = value;
               },
             ),
-            const SizedBox(
-              height: 20,
-            ),
+            const SizedBox(height: 20),
             Text(
-              'user name : $name' ,
+              'user name : $name',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
@@ -110,8 +99,8 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: calculateSum,
         tooltip: 'Sum',
-        child:  Icon(Icons.check),
-      )
+        child: Icon(Icons.check),
+      ),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 
 class NativeCommunications{
+  /// The MethodChannel used to communicate with the native platform.
+  /// This example use for method channel that mean like request execute and finish send input and give output
   static const platFormChannel =MethodChannel('com.native.channel');
   Future<double> getSumFromNative(double num1,double num2)async{
     try{
